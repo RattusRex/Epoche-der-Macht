@@ -1,4 +1,4 @@
-import { db } from "../server/db/client.ts";
+import { disconnectDatabaseClients } from "../server/db/client.ts";
 import { probeDatabase } from "../server/db/probe.ts";
 import { runWorker } from "./runner.ts";
 
@@ -16,5 +16,5 @@ try {
 } finally {
   process.removeListener("SIGINT", abort);
   process.removeListener("SIGTERM", abort);
-  await db.$disconnect();
+  await disconnectDatabaseClients();
 }

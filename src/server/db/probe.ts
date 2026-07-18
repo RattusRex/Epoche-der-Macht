@@ -1,5 +1,5 @@
-import { db } from "./client.ts";
+import { healthDb } from "./client.ts";
 
-export async function probeDatabase(client = db): Promise<void> {
+export async function probeDatabase(client = healthDb): Promise<void> {
   await client.$queryRaw`SELECT 1`;
 }

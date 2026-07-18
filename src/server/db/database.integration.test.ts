@@ -1,9 +1,9 @@
 import { afterAll, describe, expect, it } from "vitest";
-import { db } from "./client";
+import { disconnectDatabaseClients } from "./client";
 import { probeDatabase } from "./probe";
 
 describe("database probe", () => {
-  afterAll(() => db.$disconnect());
+  afterAll(disconnectDatabaseClients);
 
   it("connects to PostgreSQL", async () => {
     await expect(probeDatabase()).resolves.toBeUndefined();
