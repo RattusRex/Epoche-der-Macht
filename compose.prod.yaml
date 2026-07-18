@@ -1,0 +1,16 @@
+services:
+  web:
+    build:
+      target: runner
+    restart: unless-stopped
+
+  worker:
+    build:
+      target: runner
+    restart: unless-stopped
+
+  postgres:
+    restart: unless-stopped
+
+  cloudflared:
+    restart: unless-stopped

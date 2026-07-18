@@ -1,4 +1,22 @@
 services:
+  web:
+    build:
+      target: dev
+    command: ["pnpm", "dev"]
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - .:/app
+      - node-modules:/app/node_modules
+
+  worker:
+    build:
+      target: dev
+    command: ["node", "--import", "tsx", "src/worker/main.ts"]
+    volumes:
+      - .:/app
+      - node-modules:/app/node_modules
+
   postgres:
     networks:
       - dev-access
@@ -7,3 +25,6 @@ services:
 
 networks:
   dev-access:
+
+volumes:
+  node-modules:

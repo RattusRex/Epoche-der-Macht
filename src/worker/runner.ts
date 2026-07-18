@@ -9,6 +9,14 @@ export async function runWorker(input: {
   }
 
   await new Promise<void>((resolve) => {
-    input.signal.addEventListener("abort", () => resolve(), { once: true });
+    const keepAlive = setInterval(() => undefined, 60_000);
+    input.signal.addEventListener(
+      "abort",
+      () => {
+        clearInterval(keepAlive);
+        resolve();
+      },
+      { once: true },
+    );
   });
 }
