@@ -1,0 +1,59 @@
+services:
+  web:
+    image: epoha-web-dev
+    build:
+      target: dev
+      args:
+        DEV_UID: ${DEV_UID:-1000}
+        DEV_GID: ${DEV_GID:-1000}
+    command: ["pnpm", "dev"]
+    user: "${DEV_UID:-1000}:${DEV_GID:-1000}"
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - .:/app
+      - node-modules:/app/node_modules
+
+  worker:
+    image: epoha-worker-dev
+    build:
+      target: dev
+      args:
+        DEV_UID: ${DEV_UID:-1000}
+        DEV_GID: ${DEV_GID:-1000}
+    command: ["node", "--import", "tsx", "src/worker/main.ts"]
+    user: "${DEV_UID:-1000}:${DEV_GID:-1000}"
+    volumes:
+      - .:/app
+      - node-modules:/app/node_modules
+
+  postgres:
+    networks:
+      - dev-access
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  e2e:
+    build:
+      context: .
+      target: e2e
+    profiles:
+      - test
+    user: "${DEV_UID:-1000}:${DEV_GID:-1000}"
+    environment:
+      CI: ${CI:-}
+    depends_on:
+      web:
+        condition: service_healthy
+    shm_size: 1gb
+    networks:
+      - frontend
+    volumes:
+      - .:/app
+      - node-modules:/app/node_modules
+
+networks:
+  dev-access:
+
+volumes:
+  node-modules:

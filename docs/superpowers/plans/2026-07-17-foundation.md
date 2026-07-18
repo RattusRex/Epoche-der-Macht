@@ -19,6 +19,11 @@
 - Never put database, Cloudflare, Discord, or SMTP secrets in tracked files.
 - All manually maintained files remain below 350 lines.
 
+**Approved implementation amendment (2026-07-18):** ESLint 9.39.2 replaces
+the originally proposed 10.7.0. `eslint-config-next` 16.2.10 installs
+`eslint-plugin-react` 7.37.5, whose peer range ends at ESLint 9; the user
+approved the compatible pin after dependency resolution rejected ESLint 10.
+
 ---
 
 ## File map
@@ -95,7 +100,7 @@
     "@types/node": "24.13.3",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
-    "eslint": "10.7.0",
+    "eslint": "9.39.2",
     "eslint-config-next": "16.2.10",
     "jsdom": "29.1.1",
     "prettier": "3.9.5",
