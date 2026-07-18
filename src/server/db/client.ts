@@ -1,6 +1,6 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { loadServerEnv } from "../../config/server-env.js";
-import { PrismaClient } from "../../generated/prisma/client.js";
+import { loadServerEnv } from "../../config/server-env.ts";
+import { PrismaClient } from "../../generated/prisma/client.ts";
 
 const globalForDb = globalThis as unknown as { db?: PrismaClient };
 const { databaseUrl } = loadServerEnv(process.env);
