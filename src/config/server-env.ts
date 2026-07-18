@@ -1,5 +1,5 @@
 export type ServerEnv = Readonly<{ databaseUrl: string }>;
-type EnvironmentSource = Readonly<{ DATABASE_URL?: string }>;
+type EnvironmentSource = Readonly<Record<string, string | undefined>>;
 
 export function loadServerEnv(source: EnvironmentSource): ServerEnv {
   const databaseUrl = source.DATABASE_URL?.trim();
