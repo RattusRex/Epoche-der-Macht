@@ -32,15 +32,26 @@ another workflow.
 
 ## Current repository state
 
-The repository is in the design stage. No application scaffold or canonical
-development command exists yet. Phase 01 establishes the pnpm, Next.js,
-Prisma, PostgreSQL, Docker Compose, test, and CI entry points. Until that phase
-is complete, do not invent commands or install dependencies on the host.
+Phase 01 establishes the application scaffold and operational entry points.
+Docker Compose is canonical for installation, development, builds, tests,
+migrations, audits, and smoke checks; host Node.js and pnpm are unsupported.
+Use `.env.example` for repository validation and a Git-ignored `.env` for local
+or deployed secrets. See `docs/development.md` and `docs/deployment.md` for the
+complete runbooks.
 
-After Phase 01, Docker Compose is the canonical environment for installation,
-builds, tests, migrations, and smoke checks. Keep dependency installation and
-validation in that environment. Update this file with verified wrapper or
-package-script commands when they exist.
+Verified entry points are:
+
+- development: `docker compose --env-file .env -f compose.yaml -f compose.dev.yaml up -d --wait postgres web worker`;
+- validation: `docker compose --env-file .env -f compose.yaml -f compose.dev.yaml run --rm --no-deps web pnpm verify`;
+- integration: the same Compose prefix with `pnpm test:integration`;
+- browser smoke: the development prefix with `--profile test`, service `e2e`,
+  and `pnpm test:e2e`;
+- production build: `docker compose --env-file .env -f compose.yaml -f compose.prod.yaml build web worker`;
+- topology smoke: `./scripts/smoke.sh`.
+
+Do not manually edit generated Prisma client files or `next-env.d.ts`; both are
+Git-ignored and regenerated in containers. Schema changes require a
+version-controlled migration and database integration tests.
 
 ## Delivery workflow
 
