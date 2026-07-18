@@ -1,5 +1,6 @@
 services:
   web:
+    image: epoha-web-dev
     build:
       target: dev
     command: ["pnpm", "dev"]
@@ -11,6 +12,7 @@ services:
       - node-modules:/app/node_modules
 
   worker:
+    image: epoha-worker-dev
     build:
       target: dev
     command: ["node", "--import", "tsx", "src/worker/main.ts"]
