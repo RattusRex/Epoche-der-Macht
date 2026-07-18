@@ -1,0 +1,13 @@
+node_modules/
+.pnpm-store/
+.next/
+dist-worker/
+*.tsbuildinfo
+src/generated/
+coverage/
+playwright-report/
+test-results/
+.worktrees/
+README.md
+docs/superpowers/specs/*.md
+docs/superpowers/plans/*.md
