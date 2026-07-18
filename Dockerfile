@@ -16,13 +16,13 @@ RUN chown node:node /app
 
 FROM base AS dependencies
 
-COPY --chown=node:node package.json pnpm-lock.yaml ./
+COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 USER node
 RUN pnpm install --frozen-lockfile
 
 FROM base AS production-dependencies
 
-COPY --chown=node:node package.json pnpm-lock.yaml ./
+COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 USER node
 RUN pnpm install --prod --frozen-lockfile
 
@@ -37,6 +37,23 @@ COPY --chown=node:node . .
 RUN DATABASE_URL=postgresql://build:build@localhost:5432/build pnpm db:generate \
   && DATABASE_URL=postgresql://build:build@localhost:5432/build pnpm build \
   && pnpm worker:build
+
+FROM mcr.microsoft.com/playwright:v1.61.1-noble AS e2e
+
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+ENV HOME=/tmp
+
+RUN corepack enable \
+  && corepack prepare pnpm@10.34.5 --activate \
+  && install -d -o 1000 -g 1000 /pnpm
+
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY . .
+
+CMD ["pnpm", "test:e2e"]
 
 FROM base AS runner
 

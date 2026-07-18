@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      DEV_UID: "0"
+      DEV_GID: "0"
+      CI: "true"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Validate Compose configuration
+        run: |
+          docker compose --env-file .env.example -f compose.yaml -f compose.dev.yaml --profile test config
+          docker compose --env-file .env.example -f compose.yaml -f compose.prod.yaml --profile tunnel config
+
+      - name: Build development and browser images
+        run: docker compose --env-file .env.example -f compose.yaml -f compose.dev.yaml --profile test build web worker e2e
+
+      - name: Install from the frozen lockfile
+        run: docker compose --env-file .env.example -f compose.yaml -f compose.dev.yaml run --rm --no-deps web pnpm install --frozen-lockfile
+
+      - name: Start PostgreSQL
+        run: docker compose --env-file .env.example -f compose.yaml -f compose.dev.yaml up -d --wait postgres
+
+      - name: Generate and validate Prisma Client
+        run: docker compose --env-file .env.example -f compose.yaml -f compose.dev.yaml run --rm --no-deps web sh -lc 'pnpm db:generate && pnpm db:validate'
+
+      - name: Run static and unit checks
+        run: docker compose --env-file .env.example -f compose.yaml -f compose.dev.yaml run --rm --no-deps web sh -lc 'pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm worker:build'
+
+      - name: Run database integration tests
+        run: docker compose --env-file .env.example -f compose.yaml -f compose.dev.yaml run --rm --no-deps web pnpm test:integration
+
+      - name: Audit dependencies
+        run: docker compose --env-file .env.example -f compose.yaml -f compose.dev.yaml run --rm --no-deps web pnpm audit --audit-level high
+
+      - name: Run browser smoke test
+        run: |
+          docker compose --env-file .env.example -f compose.yaml -f compose.dev.yaml up -d --wait web
+          docker compose --env-file .env.example -f compose.yaml -f compose.dev.yaml --profile test run --rm --no-deps e2e pnpm test:e2e
+
+      - name: Stop development topology
+        run: docker compose --env-file .env.example -f compose.yaml -f compose.dev.yaml down
+
+      - name: Build and smoke production topology
+        run: |
+          docker compose --env-file .env.example -f compose.yaml -f compose.prod.yaml build web worker
+          ./scripts/smoke.sh
+          docker compose --env-file .env.example -f compose.yaml -f compose.prod.yaml up -d --wait postgres web worker
+          docker run --rm --network epoha_frontend node:24.18.0-bookworm-slim node --input-type=module -e 'for (const path of ["live", "ready"]) { const response = await fetch(`http://web:3000/api/health/${path}`); if (!response.ok) process.exit(1); }'
+
+      - name: Capture Compose logs on failure
+        if: failure()
+        run: |
+          docker compose --env-file .env.example -f compose.yaml -f compose.dev.yaml --profile test logs --no-color > compose.log 2>&1 || true
+          docker compose --env-file .env.example -f compose.yaml -f compose.prod.yaml --profile tunnel logs --no-color >> compose.log 2>&1 || true
+
+      - name: Upload failure logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: compose-logs
+          path: compose.log
+          if-no-files-found: warn
+
+      - name: Tear down containers
+        if: always()
+        run: |
+          docker compose --env-file .env.example -f compose.yaml -f compose.dev.yaml --profile test down --remove-orphans || true
+          docker compose --env-file .env.example -f compose.yaml -f compose.prod.yaml --profile tunnel down --remove-orphans || true
