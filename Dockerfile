@@ -26,8 +26,18 @@ COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 USER node
 RUN pnpm install --prod --frozen-lockfile
 
-FROM dependencies AS dev
+FROM base AS dev
 
+ARG DEV_UID=1000
+ARG DEV_GID=1000
+
+USER root
+RUN groupmod --non-unique --gid "$DEV_GID" node \
+  && usermod --non-unique --uid "$DEV_UID" --gid "$DEV_GID" node \
+  && chown node:node /app /pnpm /home/node
+
+USER node
+COPY --chown=node:node --from=dependencies /app/node_modules ./node_modules
 COPY --chown=node:node . .
 CMD ["pnpm", "dev"]
 

@@ -3,6 +3,9 @@ services:
     image: epoha-web-dev
     build:
       target: dev
+      args:
+        DEV_UID: ${DEV_UID:-1000}
+        DEV_GID: ${DEV_GID:-1000}
     command: ["pnpm", "dev"]
     user: "${DEV_UID:-1000}:${DEV_GID:-1000}"
     ports:
@@ -15,6 +18,9 @@ services:
     image: epoha-worker-dev
     build:
       target: dev
+      args:
+        DEV_UID: ${DEV_UID:-1000}
+        DEV_GID: ${DEV_GID:-1000}
     command: ["node", "--import", "tsx", "src/worker/main.ts"]
     user: "${DEV_UID:-1000}:${DEV_GID:-1000}"
     volumes:

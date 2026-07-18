@@ -33,6 +33,14 @@ compose=(
     if (!config.services.cloudflared.profiles?.includes("tunnel")) {
       fail("cloudflared must use the tunnel profile");
     }
+    const tunnelNetworks = Object.keys(config.services.cloudflared.networks ?? {});
+    if (tunnelNetworks.length !== 1 || tunnelNetworks[0] !== "frontend") {
+      fail("cloudflared must use only the frontend network");
+    }
+    const webNetworks = Object.keys(config.services.web.networks ?? {});
+    if (!webNetworks.includes("frontend") || !webNetworks.includes("backend")) {
+      fail("web must bridge the frontend and backend networks");
+    }
     if (config.networks?.backend?.internal !== true) {
       fail("backend network must be internal");
     }
